@@ -168,7 +168,16 @@ jobs:
           path: arm64
 
       - name: Android-Umgebung holen (Termux-Docker)
-        run: docker pull -q termux/termux-docker:aarch64
+        shell: bash
+        run: |
+          for versuch in 1 2 3 4 5; do
+            if docker pull -q termux/termux-docker:aarch64 2>&1 | tee -a docker-pull.log; then
+              exit 0
+            fi
+            echo "Versuch $versuch fehlgeschlagen, warte kurz ..." | tee -a docker-pull.log
+            sleep $((versuch * 15))
+          done
+          exit 1
 
       - name: Beide Systeme mit der Handy-Version von QEMU testen
         shell: bash
@@ -185,7 +194,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: log-arm64
-          path: arm64-test.log
+          path: |
+            arm64-test.log
+            docker-pull.log
           if-no-files-found: ignore
 
   app:
