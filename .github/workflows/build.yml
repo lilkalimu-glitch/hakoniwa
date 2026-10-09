@@ -1,0 +1,280 @@
+name: Hakoniwa bauen
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_VERSION: '0.1'
+  QEMU_VERSION: '11.0.3'
+  QEMU_SHA256: 'da5fcffc32762820568b828ed430a728864d34d50b6d2f30358597760cbb0523'
+  GLIB_VERSION: '2.88.4'
+  NDK_VERSION: '27.2.12479018'
+  ANDROID_API: '31'
+  GRADLE_VERSION: '8.11.1'
+
+jobs:
+  os:
+    name: Mini-Betriebssystem bauen und testen
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Werkzeuge installieren
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q clang lld qemu-system-arm
+
+      - name: Kernel bauen
+        run: make -C os
+
+      - name: Kernel in QEMU testen
+        run: python3 tests/test_os.py qemu-system-aarch64 os/kernel.elf
+
+      - name: Kernel speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: os/kernel.elf
+
+  qemu:
+    name: QEMU fürs Handy bauen (${{ matrix.abi }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, x86_64]
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Zwischenspeicher
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: out/qemu-${{ matrix.abi }}
+          key: qemu-${{ matrix.abi }}-${{ env.QEMU_VERSION }}-${{ env.GLIB_VERSION }}-${{ env.NDK_VERSION }}-${{ env.ANDROID_API }}-${{ hashFiles('qemu/**') }}
+
+      - name: Python einrichten
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Werkzeuge installieren
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ninja-build pkg-config
+          python -m pip install --quiet meson packaging
+
+      - name: Android-NDK installieren
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK_VERSION" > /dev/null
+          ls "$ANDROID_HOME/ndk"
+
+      - name: QEMU bauen
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: bash qemu/build-android.sh ${{ matrix.abi }} 2>&1 | tee build-qemu.log
+
+      - name: QEMU speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-${{ matrix.abi }}
+          path: out/qemu-${{ matrix.abi }}/libqemu.so
+
+      - name: Protokolle sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-protokolle-${{ matrix.abi }}
+          path: |
+            build-qemu.log
+            build/android-*/glib-build/meson-logs/meson-log.txt
+            build/android-*/qemu-*/build/meson-logs/meson-log.txt
+          if-no-files-found: ignore
+
+  app:
+    name: Android-App bauen
+    needs: [os, qemu]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      signed: ${{ steps.key.outputs.signed }}
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Kernel holen
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel
+          path: app/src/main/assets
+
+      - name: QEMU (arm64) holen
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu-arm64-v8a
+          path: app/src/main/jniLibs/arm64-v8a
+
+      - name: QEMU (x86_64) holen
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu-x86_64
+          path: app/src/main/jniLibs/x86_64
+
+      - name: Dateien prüfen
+        run: |
+          chmod 755 app/src/main/jniLibs/*/libqemu.so
+          ls -la app/src/main/assets app/src/main/jniLibs/*
+
+      - name: Java einrichten
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle installieren
+        run: |
+          curl -fsSL --retry 5 -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip"
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$GRADLE_VERSION/bin" >> "$GITHUB_PATH"
+
+      - name: App-Schlüssel entschlüsseln
+        id: key
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning title=Secret fehlt::KEYSTORE_PASSWORD fehlt. Die APK wird nur zum Testen signiert und nicht veröffentlicht."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/pw"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in signing/hakoniwa.p12.enc \
+            -out "$RUNNER_TEMP/hakoniwa.p12" -pass file:"$RUNNER_TEMP/pw" \
+            || { echo "::error title=Falsches Passwort::KEYSTORE_PASSWORD passt nicht zum Schlüssel."; exit 1; }
+          rm -f "$RUNNER_TEMP/pw"
+          echo "HAKONIWA_KEYSTORE=$RUNNER_TEMP/hakoniwa.p12" >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: APK bauen
+        shell: bash
+        env:
+          HAKONIWA_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          gradle assembleRelease --no-daemon --console=plain \
+            -Phakoniwa.versionCode=${{ github.run_number }} \
+            -Phakoniwa.versionName=$APP_VERSION.${{ github.run_number }} 2>&1 | tee gradle.log
+          ls -la app/build/outputs/apk/release/
+
+      - name: APKs speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Schlüssel entfernen
+        if: always()
+        run: rm -f "$RUNNER_TEMP/hakoniwa.p12"
+
+      - name: Gradle-Protokoll sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-protokoll
+          path: gradle.log
+          if-no-files-found: ignore
+
+  test:
+    name: App im Android-Emulator testen
+    needs: app
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: APKs holen
+        uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: apks
+
+      - name: KVM freischalten
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Emulator starten und App testen
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash tests/emulator_test.sh apks/app-x86_64-release.apk emulator-ergebnis
+
+      - name: Ergebnis speichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-ergebnis
+          path: emulator-ergebnis
+          if-no-files-found: ignore
+
+  release:
+    name: APK veröffentlichen
+    needs: [app, test]
+    if: needs.app.outputs.signed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: APKs holen
+        uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: apks
+
+      - name: Release erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$APP_VERSION.${{ github.run_number }}"
+          cp apks/app-arm64-v8a-release.apk "Hakoniwa-$VERSION.apk"
+          if gh release view "v$VERSION" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            gh release upload "v$VERSION" "Hakoniwa-$VERSION.apk" --clobber --repo "${{ github.repository }}"
+            exit 0
+          fi
+          gh release create "v$VERSION" "Hakoniwa-$VERSION.apk" \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "Hakoniwa $VERSION" \
+            --notes "APK fürs Handy. Einfach öffnen und installieren, neue Versionen über die alte installieren." \
+            --latest

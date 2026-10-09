@@ -1,0 +1,21 @@
+# Build-Ergebnisse
+/build/
+/out/
+/app/build/
+/.gradle/
+/local.properties
+*.iml
+.idea/
+
+# Werden auf GitHub beim Bauen eingefügt
+/app/src/main/jniLibs/
+/app/src/main/assets/kernel.elf
+
+# Mini-Betriebssystem
+/os/*.o
+/os/kernel.elf
+
+# Signierschlüssel nur verschlüsselt
+*.p12
+*.jks
+!signing/*.enc

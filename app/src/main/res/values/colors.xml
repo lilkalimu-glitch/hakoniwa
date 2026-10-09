@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FF0A0E14</color>
+    <color name="surface">#FF111821</color>
+    <color name="surface_pressed">#FF1A2430</color>
+    <color name="terminal_bg">#FF05080C</color>
+    <color name="border">#FF1F2B38</color>
+    <color name="text">#FFE6EDF3</color>
+    <color name="text_dim">#FF8B98A5</color>
+    <color name="mint">#FF3DF5C4</color>
+    <color name="mint_pressed">#FF2BC9A0</color>
+    <color name="pink">#FFFF4FA3</color>
+    <color name="vm_text">#FFA6FFCB</color>
+    <color name="sys_text">#FF6CB6FF</color>
+    <color name="err_text">#FFFF7B72</color>
+    <color name="on_mint">#FF04120D</color>
+    <color name="ic_background">#FF0A0E14</color>
+</resources>
