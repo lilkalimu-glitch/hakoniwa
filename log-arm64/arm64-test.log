@@ -1,0 +1,120 @@
+========== Ausgabe von Mein OS ==========
+A
+MEIN OS OK (läuft noch nach 6 s)
+Start: ok
+Befehle: ok
+Ausnahme: ok
+Neustart: ok
+Ausschalten: ok
+
+========== Ausgabe der VM ==========
+
++----------------------------+
+|  HAKONIWA OS 0.1           |
+|  Dein Mini-Betriebssystem  |
++----------------------------+
+
+[ ok ] Serielle Schnittstelle bereit
+[ ok ] Ausnahme-Tabelle geladen
+[ ok ] Interrupt-Controller bereit
+[ ok ] Device Tree gelesen (57 Einträge)
+
+CPU:  Cortex-A72, Stufe EL1
+RAM:  128 MiB ab 0x40000000
+
+Tippe "hilfe" für alle Befehle.
+
+hakoniwa> hilfe
+Befehle:
+  hilfe     alle Befehle anzeigen
+  hallo     Begrüßung
+  info      Daten der VM
+  zeit      Zeit seit dem Start
+  speicher  Speicherplan
+  echo      Text ausgeben
+  rechne    z. B. rechne 6 * 7
+  absturz   Fehler testen
+  neustart  VM neu starten
+  aus       VM ausschalten
+hakoniwa> Info
+Maschine:  linux,dummy-virt
+CPU:       Cortex-A72 (MIDR 0x410fd083)
+Kerne:     1
+Stufe:     EL1 (Kernel-Rechte)
+Timer:     62500000 Hz
+RAM:       128 MiB ab 0x40000000
+PSCI:      Version 1.1
+Device Tree: 57 Einträge, 1048576 Bytes
+hakoniwa> rechne 6 * 7
+6 * 7 = 42
+hakoniwa> rechne 17:5
+17 : 5 = 3 Rest 2
+hakoniwa> rechne 1/0
+Durch 0 kann man nicht teilen.
+hakoniwa> echo Hallo Welt
+Hallo Welt
+hakoniwa> zeit
+Seit dem Start vergangen: 0,32 Sekunden
+(20348717 Timer-Ticks bei 62500000 Hz)
+hakoniwa> speicher
+RAM-Anfang:  0x40000000
+Device Tree: 0x40000000 (1048576 Bytes)
+Kernel:      0x40100000 - 0x40113d50 (79 KB)
+  Stack:     0x40103d50 - 0x40113d50 (64 KB)
+Frei:        0x40113d50 - 0x48000000 (126 MiB)
+hakoniwa> hallo
+Hallo! Ich bin dein eigenes Mini-Betriebssystem.
+Ich laufe in einer virtuellen Maschine auf deinem Handy.
+hakoniwa> gibtsnicht
+Unbekannter Befehl: gibtsnicht
+Tippe "hilfe" für alle Befehle.
+hakoniwa>    
+hakoniwa> absturz
+Ich löse jetzt absichtlich eine Ausnahme aus ...
+
+!!! Ausnahme !!!
+Art:     synchron, aktuelle Stufe (SP_EL1)
+Grund:   BRK-Befehl (Haltepunkt) (EC 0x3c)
+ESR:     0xf2001234
+Befehl:  0x40101d74
+Adresse: 0x0
+Der Kernel ist angehalten. Drücke Enter für einen Neustart.
+
++----------------------------+
+|  HAKONIWA OS 0.1           |
+|  Dein Mini-Betriebssystem  |
++----------------------------+
+
+[ ok ] Serielle Schnittstelle bereit
+[ ok ] Ausnahme-Tabelle geladen
+[ ok ] Interrupt-Controller bereit
+[ ok ] Device Tree gelesen (57 Einträge)
+
+CPU:  Cortex-A72, Stufe EL1
+RAM:  128 MiB ab 0x40000000
+
+Tippe "hilfe" für alle Befehle.
+
+hakoniwa> neustart
+Neustart ...
+
+
++----------------------------+
+|  HAKONIWA OS 0.1           |
+|  Dein Mini-Betriebssystem  |
++----------------------------+
+
+[ ok ] Serielle Schnittstelle bereit
+[ ok ] Ausnahme-Tabelle geladen
+[ ok ] Interrupt-Controller bereit
+[ ok ] Device Tree gelesen (57 Einträge)
+
+CPU:  Cortex-A72, Stufe EL1
+RAM:  128 MiB ab 0x40000000
+
+Tippe "hilfe" für alle Befehle.
+
+hakoniwa> aus
+Tschüss! Die VM schaltet sich aus.
+
+ALLE TESTS BESTANDEN

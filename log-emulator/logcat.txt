@@ -1,0 +1,125 @@
+--------- beginning of main
+10-09 21:15:40.641  2318  2318 I Hakoniwa: APP: System gewählt: beispiel
+10-09 21:15:40.642  2318  2318 I Hakoniwa: APP: Start (beispiel): /data/app/~~I9vLOLLMcOhtQeA4_dJ-zw==/com.lilkalimu.hakoniwa-bg56ZXDYjAthHIpsWNrQUg==/lib/x86_64/libqemu.so -M virt,gic-version=2 -cpu cortex-a72 -smp 1 -m 128M -nodefaults -display none -serial stdio -kernel /data/user/0/com.lilkalimu.hakoniwa/files/beispiel.elf
+10-09 21:15:40.742  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:40.743  2318  2361 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: |  HAKONIWA OS 0.1           |
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: |  Dein Mini-Betriebssystem  |
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: [ ok ] Serielle Schnittstelle bereit
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: [ ok ] Ausnahme-Tabelle geladen
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: [ ok ] Interrupt-Controller bereit
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: [ ok ] Device Tree gelesen (57 Einträge)
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: CPU:  Cortex-A72, Stufe EL1
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: RAM:  128 MiB ab 0x40000000
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: Tippe "hilfe" für alle Befehle.
+10-09 21:15:40.751  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:40.751  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.247  2318  2318 I Hakoniwa: APP: Testbefehl: hilfe
+10-09 21:15:41.274  2318  2361 I Hakoniwa: VM: hakoniwa> hilfe
+10-09 21:15:41.274  2318  2361 I Hakoniwa: VM: Befehle:
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   hilfe     alle Befehle anzeigen
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   hallo     Begrüßung
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   info      Daten der VM
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   zeit      Zeit seit dem Start
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   speicher  Speicherplan
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   echo      Text ausgeben
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   rechne    z. B. rechne 6 * 7
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   absturz   Fehler testen
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   neustart  VM neu starten
+10-09 21:15:41.277  2318  2361 I Hakoniwa: VM:   aus       VM ausschalten
+10-09 21:15:41.277  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.281  2318  2318 I Hakoniwa: APP: Testbefehl: Info
+10-09 21:15:41.281  2318  2361 I Hakoniwa: VM: hakoniwa> Info
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: Maschine:  linux,dummy-virt
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: CPU:       Cortex-A72 (MIDR 0x410fd083)
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: Kerne:     1
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: Stufe:     EL1 (Kernel-Rechte)
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: Timer:     62500000 Hz
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: RAM:       128 MiB ab 0x40000000
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: PSCI:      Version 1.1
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: Device Tree: 57 Einträge, 1048576 Bytes
+10-09 21:15:41.282  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.282  2318  2318 I Hakoniwa: APP: Testbefehl: rechne 6 * 7
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: hakoniwa> rechne 6 * 7
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: 6 * 7 = 42
+10-09 21:15:41.282  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.282  2318  2318 I Hakoniwa: APP: Testbefehl: zeit
+10-09 21:15:41.282  2318  2361 I Hakoniwa: VM: hakoniwa> zeit
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Seit dem Start vergangen: 0,54 Sekunden
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: (34045471 Timer-Ticks bei 62500000 Hz)
+10-09 21:15:41.283  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.283  2318  2318 I Hakoniwa: APP: Testbefehl: speicher
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: hakoniwa> speicher
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: RAM-Anfang:  0x40000000
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Device Tree: 0x40000000 (1048576 Bytes)
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Kernel:      0x40100000 - 0x40113d50 (79 KB)
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM:   Stack:     0x40103d50 - 0x40113d50 (64 KB)
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Frei:        0x40113d50 - 0x48000000 (126 MiB)
+10-09 21:15:41.283  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:41.283  2318  2318 I Hakoniwa: APP: Testbefehl: hallo
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: hakoniwa> hallo
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Hallo! Ich bin dein eigenes Mini-Betriebssystem.
+10-09 21:15:41.283  2318  2361 I Hakoniwa: VM: Ich laufe in einer virtuellen Maschine auf deinem Handy.
+10-09 21:15:41.283  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:50.159  2318  2318 I Hakoniwa: APP: Testbefehl: neustart
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: hakoniwa> neustart
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: Neustart ...
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: |  HAKONIWA OS 0.1           |
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: |  Dein Mini-Betriebssystem  |
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: [ ok ] Serielle Schnittstelle bereit
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: [ ok ] Ausnahme-Tabelle geladen
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: [ ok ] Interrupt-Controller bereit
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: [ ok ] Device Tree gelesen (57 Einträge)
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: CPU:  Cortex-A72, Stufe EL1
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: RAM:  128 MiB ab 0x40000000
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: Tippe "hilfe" für alle Befehle.
+10-09 21:15:50.164  2318  2361 I Hakoniwa: VM: 
+10-09 21:15:50.164  2318  2361 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:53.363  2318  2318 I Hakoniwa: APP: Testbefehl: aus
+10-09 21:15:53.363  2318  2361 V Hakoniwa: VM…: hakoniwa> a
+10-09 21:15:53.363  2318  2361 V Hakoniwa: VM…: hakoniwa> au
+10-09 21:15:53.363  2318  2361 V Hakoniwa: VM…: hakoniwa> aus
+10-09 21:15:53.364  2318  2361 I Hakoniwa: VM: hakoniwa> aus
+10-09 21:15:53.364  2318  2361 I Hakoniwa: VM: Tschüss! Die VM schaltet sich aus.
+10-09 21:15:53.381  2318  2318 I Hakoniwa: APP: VM beendet (Code 0, Grund NONE)
+10-09 21:15:56.534  2318  2318 I Hakoniwa: APP: Start (beispiel): /data/app/~~I9vLOLLMcOhtQeA4_dJ-zw==/com.lilkalimu.hakoniwa-bg56ZXDYjAthHIpsWNrQUg==/lib/x86_64/libqemu.so -M virt,gic-version=2 -cpu cortex-a72 -smp 1 -m 128M -nodefaults -display none -serial stdio -kernel /data/user/0/com.lilkalimu.hakoniwa/files/beispiel.elf
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: 
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: |  HAKONIWA OS 0.1           |
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: |  Dein Mini-Betriebssystem  |
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: +----------------------------+
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: 
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: [ ok ] Serielle Schnittstelle bereit
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: [ ok ] Ausnahme-Tabelle geladen
+10-09 21:15:56.833  2318  3280 I Hakoniwa: VM: [ ok ] Interrupt-Controller bereit
+10-09 21:15:56.841  2318  3280 V Hakoniwa: VM…: [
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: [ ok ] Device Tree gelesen (57 Einträge)
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: 
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: CPU:  Cortex-A72, Stufe EL1
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: RAM:  128 MiB ab 0x40000000
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: 
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: Tippe "hilfe" für alle Befehle.
+10-09 21:15:56.859  2318  3280 I Hakoniwa: VM: 
+10-09 21:15:56.859  2318  3280 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:15:56.901  2318  2318 I Hakoniwa: APP: Testbefehl: rechne 100 : 7
+10-09 21:15:56.917  2318  3280 I Hakoniwa: VM: hakoniwa> rechne 100 : 7
+10-09 21:15:56.943  2318  3280 V Hakoniwa: VM…: 1
+10-09 21:15:56.991  2318  3280 I Hakoniwa: VM: 100 : 7 = 14 Rest 2
+10-09 21:15:56.991  2318  3280 V Hakoniwa: VM…: hakoniwa> 
+10-09 21:16:01.603  2318  2318 I Hakoniwa: APP: System gewählt: mein-os
+10-09 21:16:01.604  2318  3281 I Hakoniwa: QEMU: libqemu.so: terminating on signal 15 from pid 2318 (<unknown process>)
+10-09 21:16:01.608  2318  3280 I Hakoniwa: VM: hakoniwa> 
+10-09 21:16:01.625  2318  2318 I Hakoniwa: APP: VM beendet (Code 0, Grund SWITCH)
+10-09 21:16:01.626  2318  2318 I Hakoniwa: APP: Start (mein-os): /data/app/~~I9vLOLLMcOhtQeA4_dJ-zw==/com.lilkalimu.hakoniwa-bg56ZXDYjAthHIpsWNrQUg==/lib/x86_64/libqemu.so -M virt,gic-version=2 -cpu cortex-a72 -smp 1 -m 128M -nodefaults -display none -serial stdio -kernel /data/user/0/com.lilkalimu.hakoniwa/files/mein-os.elf
+10-09 21:16:01.766  2318  3511 V Hakoniwa: VM…: A
