@@ -34,6 +34,10 @@ rm -rf "$WORK"
 mkdir -p "$WORK" "$PREFIX/lib/pkgconfig" "$OUT" "$DOWNLOADS"
 
 TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
+
+# Thread-lokale Variablen werden "emuliert" (wie bei Termux): Das läuft auf jeder
+# Android-Version und lässt sich deshalb auch in der Termux-Docker-Umgebung
+# (Android 9) auf einem ARM-Rechner testen.
 export CC="$TOOLCHAIN/bin/${TRIPLE}${API}-clang"
 export CXX="$TOOLCHAIN/bin/${TRIPLE}${API}-clang++"
 export AR="$TOOLCHAIN/bin/llvm-ar"
@@ -105,8 +109,8 @@ ranlib = '$RANLIB'
 pkg-config = '$WORK/pkg-config'
 
 [built-in options]
-c_args = ['-fPIC']
-cpp_args = ['-fPIC']
+c_args = ['-fPIC', '-femulated-tls']
+cpp_args = ['-fPIC', '-femulated-tls']
 EOF
 
 step "glib bauen"
@@ -216,7 +220,8 @@ cd "$SRC/build"
   --disable-werror --enable-fdt=internal --disable-debug-info \
   --with-coroutine=sigaltstack --disable-qom-cast-debug \
   --enable-trace-backends=nop \
-  --extra-cflags="-include $ROOT/qemu/android/compat.h" \
+  --extra-cflags="-femulated-tls -include $ROOT/qemu/android/compat.h" \
+  --extra-cxxflags="-femulated-tls" \
   --extra-ldflags="-L$PREFIX/lib $EXTRA_OBJS -Wl,-z,max-page-size=16384 -llog"
 
 step "QEMU bauen"
@@ -228,7 +233,10 @@ chmod 755 "$OUT/libqemu.so"
 ls -la "$OUT/libqemu.so"
 "$READELF" -h "$OUT/libqemu.so" | grep -E "Type|Machine"
 "$READELF" -d "$OUT/libqemu.so" | grep -E "NEEDED|FLAGS"
-"$READELF" -l "$OUT/libqemu.so" | grep -E "LOAD|INTERP" -A1 | head -20
+"$READELF" -l "$OUT/libqemu.so" | grep -E "LOAD|INTERP|TLS" -A1 | head -24
+echo "Thread-lokale Variablen über emutls:"
+"$NM" -D --undefined-only "$OUT/libqemu.so" | grep -c emutls || true
+"$NM" "$OUT/libqemu.so" 2>/dev/null | grep -c "__emutls_v\." || true
 echo "Undefinierte setjmp-Symbole (sollten bei arm64 fehlen):"
 "$NM" -D --undefined-only "$OUT/libqemu.so" | grep -i jmp || echo "  keine"
 echo "QEMU $QEMU_VERSION für $ABI fertig."
