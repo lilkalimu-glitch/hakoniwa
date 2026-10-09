@@ -18,8 +18,9 @@ import kotlin.concurrent.thread
 /**
  * Startet und steuert die virtuelle Maschine.
  *
- * QEMU läuft als eigener Prozess (libqemu.so aus der APK). Was das Mini-Betriebssystem
- * auf seine serielle Schnittstelle schreibt, kommt hier als Text an; Tastatureingaben
+ * QEMU läuft als eigener Prozess (libqemu.so aus der APK). In die VM wird eines von zwei
+ * Programmen geladen: "Mein OS" (dein eigenes, beginnt bei null) oder das Beispiel.
+ * Was das Programm auf die Textausgabe schreibt, kommt hier als Text an; Tastatureingaben
  * gehen den umgekehrten Weg. Die VM läuft weiter, wenn man den Bildschirm dreht.
  */
 object VmController {
@@ -30,13 +31,25 @@ object VmController {
     enum class State { STOPPED, RUNNING }
     enum class Kind { VM, SYSTEM, ERROR }
 
+    /** Die Programme, die in der VM laufen können (Dateien in assets/). */
+    enum class Os(val asset: String, val label: String, val id: String) {
+        MEIN_OS("mein-os.elf", "Mein OS", "mein-os"),
+        BEISPIEL("beispiel.elf", "Beispiel", "beispiel");
+
+        companion object {
+            fun fromId(id: String?): Os? = entries.firstOrNull { it.id == id }
+        }
+    }
+
     interface Listener {
         fun onOutputChanged()
         fun onStateChanged(state: State)
     }
 
-    private enum class ExitReason { NONE, USER_STOP, RESTART }
+    private enum class ExitReason { NONE, USER_STOP, RESTART, SWITCH }
 
+    private const val PREFS = "hakoniwa"
+    private const val PREF_SYSTEM = "system"
     private const val MAX_CHARS = 80_000
     private const val TRIM_TO_CHARS = 60_000
 
@@ -56,6 +69,10 @@ object VmController {
     var state = State.STOPPED
         private set
 
+    /** Welches Programm in der VM läuft bzw. beim nächsten Start geladen wird. */
+    var system = Os.MEIN_OS
+        private set
+
     /** true, wenn die VM zuletzt über "Stopp" beendet wurde. */
     var stoppedByUser = false
         private set
@@ -71,6 +88,9 @@ object VmController {
         colorVm = appContext.getColor(R.color.vm_text)
         colorSystem = appContext.getColor(R.color.sys_text)
         colorError = appContext.getColor(R.color.err_text)
+        val saved = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(PREF_SYSTEM, null)
+        system = Os.fromId(saved) ?: Os.MEIN_OS
     }
 
     fun addListener(listener: Listener) {
@@ -79,6 +99,26 @@ object VmController {
 
     fun removeListener(listener: Listener) {
         listeners.remove(listener)
+    }
+
+    /**
+     * Wählt das Programm für die VM. Läuft die VM gerade, startet sie sofort mit dem
+     * neuen Programm neu; sonst gilt die Auswahl für den nächsten Start.
+     */
+    fun selectSystem(context: Context, newSystem: Os) {
+        init(context)
+        if (newSystem == system) return
+        system = newSystem
+        appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PREF_SYSTEM, newSystem.id).apply()
+        Log.i(TAG, "APP: System gewählt: ${newSystem.id}")
+        notifyState()
+        val p = process
+        if (p != null) {
+            exitReason = ExitReason.SWITCH
+            pendingCommands.clear()
+            p.destroy()
+        }
     }
 
     fun start(context: Context) {
@@ -96,9 +136,9 @@ object VmController {
         }
 
         val kernel = try {
-            copyKernel(app)
+            copyKernel(app, system)
         } catch (e: IOException) {
-            appendLine("Fehler: Kernel konnte nicht vorbereitet werden (${e.message}).", Kind.ERROR)
+            appendLine("Fehler: ${system.label} konnte nicht geladen werden (${e.message}).", Kind.ERROR)
             return
         }
 
@@ -114,8 +154,8 @@ object VmController {
             "-kernel", kernel.absolutePath,
         )
 
-        appendLine("VM wird gestartet …", Kind.SYSTEM)
-        Log.i(TAG, "APP: Start: ${command.joinToString(" ")}")
+        appendLine("${system.label} wird gestartet …", Kind.SYSTEM)
+        Log.i(TAG, "APP: Start (${system.id}): ${command.joinToString(" ")}")
 
         val started = try {
             val builder = ProcessBuilder(command).directory(app.filesDir)
@@ -196,9 +236,9 @@ object VmController {
 
     // -----------------------------------------------------------------------
 
-    private fun copyKernel(context: Context): File {
-        val target = File(context.filesDir, "kernel.elf")
-        context.assets.open("kernel.elf").use { input ->
+    private fun copyKernel(context: Context, which: Os): File {
+        val target = File(context.filesDir, which.asset)
+        context.assets.open(which.asset).use { input ->
             target.outputStream().use { output -> input.copyTo(output) }
         }
         return target
@@ -227,6 +267,8 @@ object VmController {
                         else -> line.append(c)
                     }
                 }
+                // Angefangene Zeile ohne Zeilenende (z. B. ein einzelner Buchstabe) auch protokollieren
+                if (line.isNotEmpty()) Log.v(TAG, "$logPrefix…: $line")
                 main.post { appendFromVm(chunk, kind, gen) }
             }
             if (line.isNotEmpty()) Log.i(TAG, "$logPrefix: $line")
@@ -247,8 +289,16 @@ object VmController {
                 appendLine("— Neustart —", Kind.SYSTEM)
                 start(appContext)
             }
-            ExitReason.USER_STOP -> appendLine("VM gestoppt.", Kind.SYSTEM)
+            ExitReason.SWITCH -> {
+                output.clear()
+                start(appContext)
+            }
+            ExitReason.USER_STOP -> {
+                pendingCommands.clear()
+                appendLine("VM gestoppt.", Kind.SYSTEM)
+            }
             ExitReason.NONE -> {
+                pendingCommands.clear()
                 if (code == 0) {
                     appendLine("VM ausgeschaltet. Tippe auf Start für einen neuen Start.", Kind.SYSTEM)
                 } else {
@@ -256,7 +306,6 @@ object VmController {
                 }
             }
         }
-        pendingCommands.clear()
     }
 
     private fun appendFromVm(chunk: String, kind: Kind, gen: Int) {
@@ -324,7 +373,11 @@ object VmController {
 
     private fun setState(newState: State) {
         state = newState
-        for (listener in listeners.toList()) listener.onStateChanged(newState)
+        notifyState()
+    }
+
+    private fun notifyState() {
+        for (listener in listeners.toList()) listener.onStateChanged(state)
     }
 
     private fun notifyOutput() {

@@ -10,6 +10,8 @@
     <string name="btn_stop">■  Stopp</string>
     <string name="btn_restart">↻  Neustart</string>
     <string name="btn_clear">Leeren</string>
+    <string name="sys_mine">Mein OS</string>
+    <string name="sys_example">Beispiel</string>
     <string name="input_hint">Befehl eingeben …</string>
     <string name="send">Senden</string>
     <string name="vm_not_running">Die VM ist aus. Tippe auf Start.</string>

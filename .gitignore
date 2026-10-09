@@ -9,11 +9,14 @@
 
 # Werden auf GitHub beim Bauen eingefügt
 /app/src/main/jniLibs/
-/app/src/main/assets/kernel.elf
+/app/src/main/assets/*.elf
 
-# Mini-Betriebssystem
-/os/*.o
-/os/kernel.elf
+# Betriebssysteme
+/mein-os/*.o
+/mein-os/kernel.elf
+/beispiel-os/*.o
+/beispiel-os/kernel.elf
+/kernels/
 
 # Signierschlüssel nur verschlüsselt
 *.p12

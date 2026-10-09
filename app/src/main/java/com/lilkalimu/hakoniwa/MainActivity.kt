@@ -21,6 +21,9 @@ class MainActivity : Activity(), VmController.Listener {
         /** Für automatische Tests: Befehle, getrennt mit ";" */
         const val EXTRA_TEST_COMMANDS = "hakoniwa.test.commands"
 
+        /** Für automatische Tests: welches Programm laufen soll ("mein-os" oder "beispiel") */
+        const val EXTRA_TEST_SYSTEM = "hakoniwa.test.system"
+
         private val QUICK_COMMANDS = listOf(
             "hilfe", "info", "zeit", "speicher", "rechne 6 * 7", "hallo", "absturz", "neustart", "aus",
         )
@@ -33,6 +36,9 @@ class MainActivity : Activity(), VmController.Listener {
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
     private lateinit var restartButton: Button
+    private lateinit var sysMine: TextView
+    private lateinit var sysExample: TextView
+    private lateinit var chipsScroll: View
     private var redrawPending = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +53,9 @@ class MainActivity : Activity(), VmController.Listener {
         startButton = findViewById(R.id.start)
         stopButton = findViewById(R.id.stop)
         restartButton = findViewById(R.id.restart)
+        sysMine = findViewById(R.id.sys_mine)
+        sysExample = findViewById(R.id.sys_example)
+        chipsScroll = findViewById(R.id.chips_scroll)
 
         applyInsets(findViewById(R.id.root))
         createQuickCommands(findViewById(R.id.chips))
@@ -65,6 +74,8 @@ class MainActivity : Activity(), VmController.Listener {
         startButton.setOnClickListener { VmController.start(this) }
         stopButton.setOnClickListener { VmController.stop() }
         restartButton.setOnClickListener { VmController.restart(this) }
+        sysMine.setOnClickListener { chooseSystem(VmController.Os.MEIN_OS) }
+        sysExample.setOnClickListener { chooseSystem(VmController.Os.BEISPIEL) }
 
         VmController.init(this)
         handleIntent(intent, firstStart = savedInstanceState == null)
@@ -106,20 +117,48 @@ class MainActivity : Activity(), VmController.Listener {
         status.setBackgroundResource(if (running) R.drawable.bg_status_on else R.drawable.bg_status_off)
         setEnabled(startButton, !running)
         setEnabled(stopButton, running)
+        updateSystemUi()
     }
 
     // -----------------------------------------------------------------------
 
     private fun handleIntent(intent: Intent?, firstStart: Boolean) {
+        val testSystem = VmController.Os.fromId(intent?.getStringExtra(EXTRA_TEST_SYSTEM))
+        if (testSystem != null) {
+            VmController.selectSystem(this, testSystem)
+        }
         val testCommands = intent?.getStringExtra(EXTRA_TEST_COMMANDS)
         if (testCommands != null) {
             VmController.queueCommands(testCommands.split(';').map { it.trim() }.filter { it.isNotEmpty() })
         }
         // Beim Öffnen der App startet die VM automatisch.
-        val shouldStart = firstStart || testCommands != null
+        val shouldStart = firstStart || testCommands != null || testSystem != null
         if (shouldStart && VmController.state == VmController.State.STOPPED && !VmController.stoppedByUser) {
             VmController.start(this)
         }
+        updateSystemUi()
+    }
+
+    /** Programm wechseln: Die VM startet sofort mit dem gewählten Programm. */
+    private fun chooseSystem(os: VmController.Os) {
+        VmController.selectSystem(this, os)
+        if (VmController.state == VmController.State.STOPPED) {
+            VmController.start(this)
+        }
+        updateSystemUi()
+    }
+
+    private fun updateSystemUi() {
+        val mine = VmController.system == VmController.Os.MEIN_OS
+        styleSegment(sysMine, selected = mine)
+        styleSegment(sysExample, selected = !mine)
+        // Die Schnellbefehle gehören zum Beispiel. "Mein OS" kennt anfangs keine Befehle.
+        chipsScroll.visibility = if (mine) View.GONE else View.VISIBLE
+    }
+
+    private fun styleSegment(view: TextView, selected: Boolean) {
+        view.setBackgroundResource(if (selected) R.drawable.bg_segment_selected else R.drawable.bg_segment)
+        view.setTextColor(getColor(if (selected) R.color.on_mint else R.color.text_dim))
     }
 
     private fun sendInput() {

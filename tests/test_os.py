@@ -4,7 +4,7 @@
 Startet den Kernel, tippt Befehle ein und prüft die Antworten:
 Start, Ruhezustand (keine Rechenlast), Befehle, Ausnahme, Neustart, Ausschalten.
 
-Aufruf: python3 tests/test_os.py [qemu-system-aarch64] [os/kernel.elf]
+Aufruf: python3 tests/test_os.py [qemu-befehl] [beispiel-os/kernel.elf]
 """
 import os
 import shlex
@@ -16,7 +16,7 @@ import time
 QEMU = shlex.split(sys.argv[1] if len(sys.argv) > 1 else "qemu-system-aarch64")
 # Im Docker-Container lässt sich die Rechenzeit von QEMU nicht direkt messen
 IDLE_CHECK = os.environ.get("IDLE_CHECK", "1") == "1"
-KERNEL = sys.argv[2] if len(sys.argv) > 2 else "os/kernel.elf"
+KERNEL = sys.argv[2] if len(sys.argv) > 2 else "beispiel-os/kernel.elf"
 
 QEMU_ARGS = [
     "-M", "virt,gic-version=2", "-cpu", "cortex-a72", "-m", "128M",

@@ -37,8 +37,8 @@ echo "== Installieren"
 adb install -r "$APK" || fail "Installation fehlgeschlagen"
 adb logcat -c
 
-echo "== App starten (VM startet automatisch) und Befehle senden"
-adb shell "am start -W -n $PKG/.MainActivity --es hakoniwa.test.commands 'hilfe;Info;rechne 6 * 7;zeit;speicher;hallo'" \
+echo "== App mit dem Beispiel starten (VM startet automatisch) und Befehle senden"
+adb shell "am start -W -n $PKG/.MainActivity --es hakoniwa.test.system beispiel --es hakoniwa.test.commands 'hilfe;Info;rechne 6 * 7;zeit;speicher;hallo'" \
   || fail "App ließ sich nicht starten"
 
 wait_log "VM: |  HAKONIWA OS" 120
@@ -76,6 +76,16 @@ adb shell "am start -n $PKG/.MainActivity --es hakoniwa.test.commands 'rechne 10
 wait_log "VM: 100 : 7 = 14 Rest 2" 90
 sleep 2
 adb exec-out screencap -p > "$OUT/screenshot-3-neu.png"
+
+echo "== Wechsel zu Mein OS"
+adb shell "am start -n $PKG/.MainActivity --es hakoniwa.test.system mein-os" || fail "Intent fehlgeschlagen"
+wait_log "APP: Start (mein-os)" 60
+sleep 6
+if adb logcat -d -s Hakoniwa:V | sed -n '/APP: Start (mein-os)/,$p' | grep -qF "APP: VM beendet"; then
+  fail "Mein OS: Die VM hat sich direkt wieder beendet"
+fi
+adb logcat -d -s Hakoniwa:V | sed -n '/APP: Start (mein-os)/,$p' | grep -E "VM…?:" | tail -3 || true
+adb exec-out screencap -p > "$OUT/screenshot-4-mein-os.png"
 
 adb logcat -d -s Hakoniwa:V > "$OUT/logcat.txt"
 echo "ALLE APP-TESTS BESTANDEN"

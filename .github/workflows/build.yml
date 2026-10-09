@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  APP_VERSION: '0.1'
+  APP_VERSION: '0.2'
   QEMU_VERSION: '11.0.3'
   QEMU_SHA256: 'da5fcffc32762820568b828ed430a728864d34d50b6d2f30358597760cbb0523'
   GLIB_VERSION: '2.88.4'
@@ -26,7 +26,7 @@ env:
 
 jobs:
   os:
-    name: Mini-Betriebssystem bauen und testen
+    name: Betriebssysteme bauen und testen
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -40,26 +40,37 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q clang lld qemu-system-arm
 
-      - name: Kernel bauen
-        run: make -C os
+      - name: Mein OS bauen
+        run: make -C mein-os
 
-      - name: Kernel in QEMU testen
+      - name: Beispiel bauen
+        run: make -C beispiel-os
+
+      - name: Mein OS in QEMU testen
         shell: bash
-        run: python3 tests/test_os.py qemu-system-aarch64 os/kernel.elf 2>&1 | tee os-test.log
+        run: python3 tests/test_mein_os.py qemu-system-aarch64 mein-os/kernel.elf 2>&1 | tee mein-os-test.log
 
-      - name: Protokoll sichern
+      - name: Beispiel in QEMU testen
+        shell: bash
+        run: python3 tests/test_os.py qemu-system-aarch64 beispiel-os/kernel.elf 2>&1 | tee os-test.log
+
+      - name: Protokolle sichern
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: log-os
-          path: os-test.log
+          path: |
+            mein-os-test.log
+            os-test.log
           if-no-files-found: ignore
 
       - name: Kernel speichern
         uses: actions/upload-artifact@v4
         with:
           name: kernel
-          path: os/kernel.elf
+          path: |
+            mein-os/kernel.elf
+            beispiel-os/kernel.elf
 
   qemu:
     name: QEMU fürs Handy bauen (${{ matrix.abi }})
@@ -148,7 +159,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kernel
-          path: os
+          path: kernels
 
       - name: QEMU (arm64) holen
         uses: actions/download-artifact@v4
@@ -159,15 +170,15 @@ jobs:
       - name: Android-Umgebung holen (Termux-Docker)
         run: docker pull -q termux/termux-docker:aarch64
 
-      - name: Kernel mit der Handy-Version von QEMU testen
+      - name: Beide Systeme mit der Handy-Version von QEMU testen
         shell: bash
         env:
           IDLE_CHECK: '0'
         run: |
           chmod 755 arm64/libqemu.so
-          python3 tests/test_os.py \
-            "docker run -i --rm --privileged -v $PWD:/work termux/termux-docker:aarch64 /work/arm64/libqemu.so" \
-            /work/os/kernel.elf 2>&1 | tee arm64-test.log
+          QEMU="docker run -i --rm --privileged -v $PWD:/work termux/termux-docker:aarch64 /work/arm64/libqemu.so"
+          python3 tests/test_mein_os.py "$QEMU" /work/kernels/mein-os/kernel.elf 2>&1 | tee arm64-test.log
+          python3 tests/test_os.py "$QEMU" /work/kernels/beispiel-os/kernel.elf 2>&1 | tee -a arm64-test.log
 
       - name: Protokoll sichern
         if: always()
@@ -194,7 +205,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kernel
-          path: app/src/main/assets
+          path: kernels
+
+      - name: Kernel in die App legen
+        run: |
+          mkdir -p app/src/main/assets
+          cp kernels/mein-os/kernel.elf app/src/main/assets/mein-os.elf
+          cp kernels/beispiel-os/kernel.elf app/src/main/assets/beispiel.elf
 
       - name: QEMU (arm64) holen
         uses: actions/download-artifact@v4
@@ -366,7 +383,7 @@ jobs:
 
           | Schritt | Ergebnis |
           | --- | --- |
-          | Mini-Betriebssystem | ${{ needs.os.result }} |
+          | Betriebssysteme | ${{ needs.os.result }} |
           | QEMU fürs Handy | ${{ needs.qemu.result }} |
           | QEMU auf ARM getestet | ${{ needs.arm64.result }} |
           | Android-App | ${{ needs.app.result }} |

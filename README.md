@@ -16,9 +16,15 @@ Neue Versionen einfach über die alte installieren.
 
 ## Benutzen
 
-- Beim Öffnen der App startet die VM automatisch.
-- Unten einen Befehl eintippen und auf **Senden** tippen, oder einen Schnellbefehl antippen.
-- **Stopp** beendet die VM, **Neustart** startet sie frisch, **Start** schaltet sie wieder ein.
+Oben in der App wählst du, was in der virtuellen Maschine läuft:
+
+- **Mein OS** ist dein eigenes Betriebssystem. Es beginnt bei null: Am Anfang zeigt es nur
+  einen einzigen Buchstaben an. Du baust es Schritt für Schritt selbst aus, siehe [`mein-os/`](mein-os).
+- **Beispiel** ist ein fertiges Mini-Betriebssystem mit Befehlen. Es zeigt, wie weit man kommen kann.
+
+Beim Öffnen der App startet die VM automatisch. **Stopp** beendet sie, **Neustart** startet sie frisch,
+**Start** schaltet sie wieder ein. Beim Beispiel kannst du unten Befehle eintippen
+oder einen Schnellbefehl antippen:
 
 | Befehl | Was er macht |
 | --- | --- |
@@ -34,26 +40,28 @@ Neue Versionen einfach über die alte installieren.
 
 ## Aufbau
 
-- `os/` – das Mini-Betriebssystem (C und Assembler). Es startet ohne fremden Code direkt auf
-  der virtuellen CPU (AArch64, Stufe EL1) und bringt eine kleine Kommandozeile mit.
-- `app/` – die Android-App (Kotlin). Sie startet QEMU und zeigt an, was das Mini-Betriebssystem ausgibt.
+- `mein-os/` – dein eigenes Betriebssystem, Schritt für Schritt. Es startet ohne fremden Code
+  direkt auf der virtuellen CPU (AArch64).
+- `beispiel-os/` – das fertige Mini-Betriebssystem (C und Assembler) mit einer kleinen Kommandozeile.
+- `app/` – die Android-App (Kotlin). Sie startet QEMU und zeigt an, was das Programm in der VM ausgibt.
 - `qemu/` – baut [QEMU](https://www.qemu.org) für Android. QEMU stellt die virtuelle Maschine
   bereit: Prozessor, 128 MB Speicher und eine serielle Schnittstelle.
-- `tests/` – automatische Tests für das Mini-Betriebssystem und die App.
+- `tests/` – automatische Tests für beide Betriebssysteme und die App.
 
 ## Selber bauen
 
 Jeder Push auf `main` baut über GitHub Actions alles neu:
-Mini-Betriebssystem (mit Test in QEMU), QEMU für Android (arm64 und x86_64),
+beide Betriebssysteme (mit Test in QEMU), QEMU für Android (arm64 und x86_64),
 Test der Handy-Version von QEMU auf einem ARM-Rechner, APK, Test der App im Android-Emulator,
 danach ein Release mit der APK. Die Protokolle jedes Laufs landen im Zweig `ci-ergebnis`.
 Dafür braucht der Build das Secret `KEYSTORE_PASSWORD`. Wer das Projekt kopiert, braucht einen eigenen Schlüssel.
 
-Das Mini-Betriebssystem allein lässt sich auf einem Linux-Rechner testen:
+Die Betriebssysteme lassen sich auch auf einem Linux-Rechner testen:
 
 ```sh
 sudo apt install clang lld qemu-system-arm
-make -C os run        # Beenden: Strg+A, dann X
+make -C mein-os run       # Beenden: Strg+A, dann X
+make -C beispiel-os run
 ```
 
 ## Lizenz

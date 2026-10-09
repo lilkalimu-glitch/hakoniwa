@@ -69,11 +69,49 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Terminal: hier erscheint, was das Mini-Betriebssystem ausgibt -->
+    <!-- Auswahl: welches Programm in der VM läuft -->
+    <LinearLayout
+        android:id="@+id/systems"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_segment_container"
+        android:orientation="horizontal"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/sys_mine"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_segment_selected"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="@string/sys_mine"
+            android:textColor="@color/on_mint"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sys_example"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_segment"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="@string/sys_example"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Terminal: hier erscheint, was das Programm in der VM ausgibt -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:layout_weight="1"
         android:background="@drawable/bg_terminal">
 
@@ -99,8 +137,9 @@
         </ScrollView>
     </FrameLayout>
 
-    <!-- Schnellbefehle -->
+    <!-- Schnellbefehle (nur beim Beispiel) -->
     <HorizontalScrollView
+        android:id="@+id/chips_scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
