@@ -148,6 +148,11 @@ EOF
 step "Android-Ergänzungen"
 EXTRA_OBJS="$WORK/compat.o"
 "$CC" -O2 -fPIC -Wall -c "$ROOT/qemu/android/compat.c" -o "$WORK/compat.o"
+# QEMU verlangt librt, wenn es shm_open nicht findet. Bei Android steckt alles in
+# libc, deshalb reicht eine leere Bibliothek.
+echo 'static int hakoniwa_leer __attribute__((unused));' > "$WORK/leer.c"
+"$CC" -c "$WORK/leer.c" -o "$WORK/leer.o"
+"$AR" rcs "$PREFIX/lib/librt.a" "$WORK/leer.o"
 if [ "$CPU" = aarch64 ]; then
   # setjmp/longjmp ohne die Prüfungen von Android 12+ (siehe qemu/android/README.md)
   mkdir -p "$WORK/setjmp/private"
@@ -212,7 +217,7 @@ cd "$SRC/build"
   --with-coroutine=sigaltstack --disable-qom-cast-debug \
   --enable-trace-backends=nop \
   --extra-cflags="-include $ROOT/qemu/android/compat.h" \
-  --extra-ldflags="$EXTRA_OBJS -Wl,-z,max-page-size=16384 -llog"
+  --extra-ldflags="-L$PREFIX/lib $EXTRA_OBJS -Wl,-z,max-page-size=16384 -llog"
 
 step "QEMU bauen"
 make -j"$JOBS" qemu-system-aarch64
