@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   APP_VERSION: '0.1'
@@ -44,7 +44,16 @@ jobs:
         run: make -C os
 
       - name: Kernel in QEMU testen
-        run: python3 tests/test_os.py qemu-system-aarch64 os/kernel.elf
+        shell: bash
+        run: python3 tests/test_os.py qemu-system-aarch64 os/kernel.elf 2>&1 | tee os-test.log
+
+      - name: Protokoll sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-os
+          path: os-test.log
+          if-no-files-found: ignore
 
       - name: Kernel speichern
         uses: actions/upload-artifact@v4
@@ -103,15 +112,25 @@ jobs:
           name: qemu-${{ matrix.abi }}
           path: out/qemu-${{ matrix.abi }}/libqemu.so
 
+      - name: Protokolle kürzen
+        if: always()
+        run: |
+          mkdir -p logs
+          [ -f build-qemu.log ] && tail -n 3000 build-qemu.log > logs/build-qemu.log || true
+          for f in build/android-*/glib-build/meson-logs/meson-log.txt; do
+            [ -f "$f" ] && tail -n 400 "$f" > logs/glib-meson-log.txt
+          done
+          for f in build/android-*/qemu-*/build/meson-logs/meson-log.txt; do
+            [ -f "$f" ] && tail -n 600 "$f" > logs/qemu-meson-log.txt
+          done
+          ls -la logs
+
       - name: Protokolle sichern
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qemu-protokolle-${{ matrix.abi }}
-          path: |
-            build-qemu.log
-            build/android-*/glib-build/meson-logs/meson-log.txt
-            build/android-*/qemu-*/build/meson-logs/meson-log.txt
+          name: log-qemu-${{ matrix.abi }}
+          path: logs
           if-no-files-found: ignore
 
   app:
@@ -201,10 +220,10 @@ jobs:
         run: rm -f "$RUNNER_TEMP/hakoniwa.p12"
 
       - name: Gradle-Protokoll sichern
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gradle-protokoll
+          name: log-app
           path: gradle.log
           if-no-files-found: ignore
 
@@ -245,7 +264,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: emulator-ergebnis
+          name: log-emulator
           path: emulator-ergebnis
           if-no-files-found: ignore
 
@@ -278,3 +297,46 @@ jobs:
             --title "Hakoniwa $VERSION" \
             --notes "APK fürs Handy. Einfach öffnen und installieren, neue Versionen über die alte installieren." \
             --latest
+
+  ergebnis:
+    name: Ergebnisse speichern
+    needs: [os, qemu, app, test, release]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Protokolle holen
+        uses: actions/download-artifact@v4
+        with:
+          pattern: log-*
+          path: ergebnis
+
+      - name: Zusammenfassung schreiben
+        run: |
+          mkdir -p ergebnis
+          cat > ergebnis/ZUSAMMENFASSUNG.md <<EOF
+          # Lauf ${{ github.run_number }}
+
+          Commit: ${{ github.sha }}
+
+          | Schritt | Ergebnis |
+          | --- | --- |
+          | Mini-Betriebssystem | ${{ needs.os.result }} |
+          | QEMU fürs Handy | ${{ needs.qemu.result }} |
+          | Android-App | ${{ needs.app.result }} |
+          | Test im Emulator | ${{ needs.test.result }} |
+          | Veröffentlichen | ${{ needs.release.result }} |
+          EOF
+          find ergebnis -type f | sort
+
+      - name: In den Zweig ci-ergebnis schreiben
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd ergebnis
+          git init -q -b ci-ergebnis
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Ergebnisse von Lauf ${{ github.run_number }}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" ci-ergebnis

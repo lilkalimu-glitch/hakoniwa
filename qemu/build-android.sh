@@ -187,6 +187,15 @@ print("meson.build angepasst")
 PY
 # Eigene Geräteliste (nur die Maschine "virt")
 cp "$ROOT/qemu/config/hakoniwa.mak" "$SRC/configs/devices/aarch64-softmmu/hakoniwa.mak"
+# Ohne CXL fehlt in QEMU 11 sonst diese Funktion beim Linken
+cat >> "$SRC/hw/cxl/cxl-host-stubs.c" <<'EOF'
+
+/* Hakoniwa: Ersatz, falls CXL abgeschaltet ist */
+GSList *cxl_fmws_get_all_sorted(void)
+{
+    return NULL;
+}
+EOF
 
 step "QEMU konfigurieren"
 mkdir -p "$SRC/build"
