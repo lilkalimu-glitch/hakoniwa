@@ -4,8 +4,8 @@ Android-App, die auf dem Handy eine virtuelle Maschine startet. Darin läuft ein
 kleines Betriebssystem. Dein echtes Android wird dabei nicht verändert, und die App braucht kein Root.
 
 <p align="center">
-  <img src="docs/screenshots/start.jpg" width="220" alt="Start der VM">
-  <img src="docs/screenshots/befehle.jpg" width="220" alt="Befehle im Mini-Betriebssystem">
+  <img src="docs/screenshots/mein-os.jpg" width="220" alt="Mein OS bei Schritt 0">
+  <img src="docs/screenshots/befehle.jpg" width="220" alt="Das Beispiel mit Befehlen">
 </p>
 
 ## Download

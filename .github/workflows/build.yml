@@ -148,7 +148,9 @@ jobs:
     name: QEMU fürs Handy auf ARM testen
     needs: [os, qemu]
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
+    timeout-minutes: 25
+    outputs:
+      tested: ${{ steps.image.outputs.available }}
     steps:
       - name: Code holen
         uses: actions/checkout@v5
@@ -167,19 +169,39 @@ jobs:
           name: qemu-arm64-v8a
           path: arm64
 
+      - name: Zwischenspeicher für die Android-Umgebung
+        id: image-cache
+        uses: actions/cache@v4
+        with:
+          path: termux-docker.tar
+          key: termux-docker-aarch64-v1
+
       - name: Android-Umgebung holen (Termux-Docker)
+        id: image
         shell: bash
         run: |
-          for versuch in 1 2 3 4 5; do
-            if docker pull -q termux/termux-docker:aarch64 2>&1 | tee -a docker-pull.log; then
+          IMAGE=termux/termux-docker:aarch64
+          if [ -f termux-docker.tar ]; then
+            docker load -i termux-docker.tar | tee -a docker-pull.log
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Docker Hub begrenzt Downloads ohne Anmeldung; deshalb auch über den Spiegel von Google versuchen
+          for quelle in "$IMAGE" "mirror.gcr.io/$IMAGE" "$IMAGE" "mirror.gcr.io/$IMAGE"; do
+            if docker pull -q "$quelle" 2>&1 | tee -a docker-pull.log; then
+              [ "$quelle" != "$IMAGE" ] && docker tag "$quelle" "$IMAGE"
+              docker save -o termux-docker.tar "$IMAGE"
+              echo "available=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            echo "Versuch $versuch fehlgeschlagen, warte kurz ..." | tee -a docker-pull.log
-            sleep $((versuch * 15))
+            echo "Nicht geklappt: $quelle" | tee -a docker-pull.log
+            sleep 20
           done
-          exit 1
+          echo "::warning title=ARM-Test übersprungen::Die Android-Umgebung (Termux-Docker) war gerade nicht erreichbar."
+          echo "available=false" >> "$GITHUB_OUTPUT"
 
       - name: Beide Systeme mit der Handy-Version von QEMU testen
+        if: steps.image.outputs.available == 'true'
         shell: bash
         env:
           IDLE_CHECK: '0'
@@ -396,7 +418,7 @@ jobs:
           | --- | --- |
           | Betriebssysteme | ${{ needs.os.result }} |
           | QEMU fürs Handy | ${{ needs.qemu.result }} |
-          | QEMU auf ARM getestet | ${{ needs.arm64.result }} |
+          | QEMU auf ARM getestet | ${{ needs.arm64.result }} (Test gelaufen: ${{ needs.arm64.outputs.tested }}) |
           | Android-App | ${{ needs.app.result }} |
           | Test im Emulator | ${{ needs.test.result }} |
           | Veröffentlichen | ${{ needs.release.result }} |
