@@ -3,6 +3,11 @@
 Android-App, die auf dem Handy eine virtuelle Maschine startet. Darin läuft ein eigenes,
 kleines Betriebssystem. Dein echtes Android wird dabei nicht verändert, und die App braucht kein Root.
 
+<p align="center">
+  <img src="docs/screenshots/start.jpg" width="220" alt="Start der VM">
+  <img src="docs/screenshots/befehle.jpg" width="220" alt="Befehle im Mini-Betriebssystem">
+</p>
+
 ## Download
 
 Die neueste APK gibt es unter [Releases](../../releases/latest). Auf dem Handy öffnen und installieren.
@@ -39,8 +44,9 @@ Neue Versionen einfach über die alte installieren.
 ## Selber bauen
 
 Jeder Push auf `main` baut über GitHub Actions alles neu:
-Mini-Betriebssystem (mit Test in QEMU), QEMU für Android (arm64 und x86_64), APK,
-Test der App im Android-Emulator, danach ein Release mit der APK.
+Mini-Betriebssystem (mit Test in QEMU), QEMU für Android (arm64 und x86_64),
+Test der Handy-Version von QEMU auf einem ARM-Rechner, APK, Test der App im Android-Emulator,
+danach ein Release mit der APK. Die Protokolle jedes Laufs landen im Zweig `ci-ergebnis`.
 Dafür braucht der Build das Secret `KEYSTORE_PASSWORD`. Wer das Projekt kopiert, braucht einen eigenen Schlüssel.
 
 Das Mini-Betriebssystem allein lässt sich auf einem Linux-Rechner testen:
