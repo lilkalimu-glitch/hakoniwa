@@ -3,7 +3,7 @@
     <string name="app_name">Hakoniwa</string>
     <string name="title">HAKONIWA</string>
     <string name="title_jp">箱庭</string>
-    <string name="subtitle">Virtuelle Maschine · AArch64 · 128 MB</string>
+    <string name="subtitle">Virtuelle Maschine · AArch64</string>
     <string name="status_on">● LÄUFT</string>
     <string name="status_off">● AUS</string>
     <string name="btn_start">▶  Start</string>

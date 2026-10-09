@@ -385,10 +385,10 @@ void kernel_main(void)
     boot_ticks = timer_ticks();
 
     kputs("\n");
-    kputs("+--------------------------------+\n");
-    kputs("|  HAKONIWA OS " OS_VERSION "               |\n");
-    kputs("|  Dein eigenes Betriebssystem   |\n");
-    kputs("+--------------------------------+\n");
+    kputs("+----------------------------+\n");
+    kputs("|  HAKONIWA OS " OS_VERSION "           |\n");
+    kputs("|  Dein Mini-Betriebssystem  |\n");
+    kputs("+----------------------------+\n");
     kputs("\n");
     kputs("[ ok ] Serielle Schnittstelle bereit\n");
 

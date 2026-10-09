@@ -7,12 +7,15 @@ Start, Ruhezustand (keine Rechenlast), Befehle, Ausnahme, Neustart, Ausschalten.
 Aufruf: python3 tests/test_os.py [qemu-system-aarch64] [os/kernel.elf]
 """
 import os
+import shlex
 import subprocess
 import sys
 import threading
 import time
 
-QEMU = sys.argv[1] if len(sys.argv) > 1 else "qemu-system-aarch64"
+QEMU = shlex.split(sys.argv[1] if len(sys.argv) > 1 else "qemu-system-aarch64")
+# Im Docker-Container lässt sich die Rechenzeit von QEMU nicht direkt messen
+IDLE_CHECK = os.environ.get("IDLE_CHECK", "1") == "1"
 KERNEL = sys.argv[2] if len(sys.argv) > 2 else "os/kernel.elf"
 
 QEMU_ARGS = [
@@ -27,7 +30,7 @@ PROMPT = "hakoniwa> "
 class VM:
     def __init__(self):
         self.proc = subprocess.Popen(
-            [QEMU] + QEMU_ARGS,
+            QEMU + QEMU_ARGS,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         self.out = bytearray()
@@ -100,12 +103,13 @@ def main():
         print("Start: ok")
 
         # 2. Ruhezustand: Die VM soll schlafen, solange niemand tippt.
-        time.sleep(1.0)
-        before = vm.cpu_seconds()
-        time.sleep(4.0)
-        used = vm.cpu_seconds() - before
-        print(f"Rechenzeit in 4 s Ruhe: {used:.2f} s")
-        assert used < 1.0, f"VM verbraucht im Leerlauf zu viel Rechenzeit ({used:.2f} s in 4 s)"
+        if IDLE_CHECK:
+            time.sleep(1.0)
+            before = vm.cpu_seconds()
+            time.sleep(4.0)
+            used = vm.cpu_seconds() - before
+            print(f"Rechenzeit in 4 s Ruhe: {used:.2f} s")
+            assert used < 1.0, f"VM verbraucht im Leerlauf zu viel Rechenzeit ({used:.2f} s in 4 s)"
 
         # 3. Befehle
         vm.command("hilfe", "Befehle:", "VM ausschalten")

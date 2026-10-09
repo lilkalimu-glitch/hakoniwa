@@ -133,6 +133,50 @@ jobs:
           path: logs
           if-no-files-found: ignore
 
+  arm64:
+    name: QEMU fürs Handy auf ARM testen
+    needs: [os, qemu]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Kernel holen
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel
+          path: os
+
+      - name: QEMU (arm64) holen
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu-arm64-v8a
+          path: arm64
+
+      - name: Android-Umgebung holen (Termux-Docker)
+        run: docker pull -q termux/termux-docker:aarch64
+
+      - name: Kernel mit der Handy-Version von QEMU testen
+        shell: bash
+        env:
+          IDLE_CHECK: '0'
+        run: |
+          chmod 755 arm64/libqemu.so
+          python3 tests/test_os.py \
+            "docker run -i --rm --privileged -v $PWD:/work termux/termux-docker:aarch64 /work/arm64/libqemu.so" \
+            /work/os/kernel.elf 2>&1 | tee arm64-test.log
+
+      - name: Protokoll sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-arm64
+          path: arm64-test.log
+          if-no-files-found: ignore
+
   app:
     name: Android-App bauen
     needs: [os, qemu]
@@ -256,6 +300,7 @@ jobs:
           api-level: 35
           arch: x86_64
           target: google_apis
+          profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: bash tests/emulator_test.sh apks/app-x86_64-release.apk emulator-ergebnis
@@ -270,7 +315,7 @@ jobs:
 
   release:
     name: APK veröffentlichen
-    needs: [app, test]
+    needs: [app, test, arm64]
     if: needs.app.outputs.signed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -300,7 +345,7 @@ jobs:
 
   ergebnis:
     name: Ergebnisse speichern
-    needs: [os, qemu, app, test, release]
+    needs: [os, qemu, arm64, app, test, release]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -323,6 +368,7 @@ jobs:
           | --- | --- |
           | Mini-Betriebssystem | ${{ needs.os.result }} |
           | QEMU fürs Handy | ${{ needs.qemu.result }} |
+          | QEMU auf ARM getestet | ${{ needs.arm64.result }} |
           | Android-App | ${{ needs.app.result }} |
           | Test im Emulator | ${{ needs.test.result }} |
           | Veröffentlichen | ${{ needs.release.result }} |
