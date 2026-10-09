@@ -122,7 +122,7 @@ meson compile -C "$WORK/glib-build"
 meson install -C "$WORK/glib-build" --quiet
 
 # Alle statischen Hilfsbibliotheken (pcre2, intl, ...) in den Prefix kopieren
-find "$WORK/glib-build" -name '*.a' -exec cp -n {} "$PREFIX/lib/" \;
+find "$WORK/glib-build" -name '*.a' -exec cp --update=none {} "$PREFIX/lib/" \;
 ls -la "$PREFIX/lib"/*.a
 
 GLIB_LIBS="-lglib-2.0"

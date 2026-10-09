@@ -1,6 +1,7 @@
 /*
  * Ergänzungen für Android (bionic), die QEMU erwartet.
  */
+#define _GNU_SOURCE 1  /* für memfd_create() */
 #include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
